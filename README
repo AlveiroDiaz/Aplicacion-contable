@@ -1,0 +1,16 @@
+### Estrategia de Reapertura de Período Contable
+
+Aunque la reapertura de un período no está implementada en esta prueba, la estrategia arquitectónica y de negocio para abordarla en un entorno de producción sería la siguiente:
+
+1. **Control de Accesos (Roles):** 
+   La reapertura de un período es una operación crítica. El endpoint (`POST /api/periodos/reabrir`) estaría estrictamente protegido mediante *Role-Based Access Control (RBAC)*. Únicamente usuarios con el rol de `ADMINISTRADOR_FINANCIERO` o `CONTADOR_JEFE` tendrían autorización para ejecutarla.
+
+2. **Trazabilidad y Auditoría (Log obligatorio):** 
+   Nunca se debe cambiar el flag `cerrado = false` de forma silenciosa. El sistema requeriría que el usuario envíe un payload con el `motivo_reapertura`. Esto desencadenaría la creación de un registro inmutable en una tabla `auditoria_periodos`, guardando:
+   - ID del usuario que autoriza.
+   - Fecha y hora exacta (Timestamp).
+   - Período afectado.
+   - Motivo justificado de la acción.
+
+3. **Prevención de Cascada:**
+   A nivel de reglas de negocio, si un usuario desea reabrir, por ejemplo, el período de "Enero", el sistema debe validar el estado de los meses posteriores. Si "Febrero" y "Marzo" ya están cerrados, una alteración en Enero afectaría los saldos iniciales de los meses siguientes. La estrategia exigiría reabrir los meses en orden inverso (primero Marzo, luego Febrero, luego Enero) o disparar un proceso en *background* (ej. Celery/RabbitMQ) que recalcule los saldos acumulados (Libro Mayor) de los períodos subsecuentes tras los nuevos ajustes.

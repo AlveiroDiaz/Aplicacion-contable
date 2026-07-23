@@ -16,8 +16,10 @@ class MovimientoLibroMayorResponse(BaseModel):
     comprobante_consecutivo: str
     descripcion_comprobante: str
     descripcion_movimiento: Optional[str]
+    tercero: Optional[str]
     debito: float
     credito: float
+    saldo_acumulado: float
 
     class Config:
         from_attributes = True
@@ -34,6 +36,8 @@ class LibroMayorResponse(BaseModel):
 def consultar_libro_mayor(
     empresa_id: UUID,
     cuenta_codigo: str,
+    fecha_inicio: Optional[str] = Query(None),
+    fecha_fin: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     # 1. Validar que la cuenta exista para la empresa
@@ -46,34 +50,46 @@ def consultar_libro_mayor(
         raise HTTPException(status_code=404, detail="La cuenta contable no existe.")
 
     # 2. Consultar los movimientos asociados a esta cuenta uniendo con la tabla comprobantes
-    resultados = db.query(MovimientoContable, Comprobante).join(
+    query = db.query(MovimientoContable, Comprobante).join(
         Comprobante, MovimientoContable.comprobante_id == Comprobante.id
     ).filter(
         Comprobante.empresa_id == empresa_id,
         MovimientoContable.cuenta_codigo == cuenta_codigo
-    ).all()
+    )
+
+    if fecha_inicio:
+        query = query.filter(Comprobante.fecha >= fecha_inicio)
+    if fecha_fin:
+        query = query.filter(Comprobante.fecha <= fecha_fin)
+
+    resultados = query.order_by(Comprobante.fecha, Comprobante.consecutivo).all()
 
     movimientos_lista = []
     t_debito = 0.0
     t_credito = 0.0
+    saldo_corriendo = 0.0
 
     for mov, comp in resultados:
-        t_debito += float(mov.debito)
-        t_credito += float(mov.credito)
-        
+        debito = float(mov.debito)
+        credito = float(mov.credito)
+        t_debito += debito
+        t_credito += credito
+        saldo_corriendo += debito - credito
+
         movimientos_lista.append(
             MovimientoLibroMayorResponse(
                 fecha=str(comp.fecha),
                 comprobante_consecutivo=comp.consecutivo,
                 descripcion_comprobante=comp.descripcion,
                 descripcion_movimiento=mov.descripcion,
-                debito=float(mov.debito),
-                credito=float(mov.credito)
+                tercero=str(mov.tercero_id) if mov.tercero_id else None,
+                debito=debito,
+                credito=credito,
+                saldo_acumulado=saldo_corriendo
             )
         )
 
-    # 3. Calcular saldo (para cuentas de Activo/Gasto el saldo es Débito - Crédito; para Pasivo/Patrimonio/Ingreso suele ser al revés. Por simplicidad base, usaremos Débito - Crédito)
-    saldo_final = t_debito - t_credito
+    saldo_final = saldo_corriendo
 
     return LibroMayorResponse(
         cuenta_codigo=cuenta.codigo,

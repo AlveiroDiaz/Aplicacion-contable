@@ -11,6 +11,7 @@ from app.api.comprobantes import router as comprobantes_router
 from app.api.empresas import router as empresas_router
 from app.api.reportes import router as reportes_router
 from app.api.cuentas import router as cuentas_router
+from app.api.periodos import router as periodos_router
 # Importar el índice de modelos para que SQLAlchemy los reconozca
 from app.models import base 
 
@@ -37,6 +38,7 @@ app.include_router(comprobantes_router, prefix="/api/comprobantes", tags=["Compr
 app.include_router(empresas_router, prefix="/api/empresas", tags=["Empresas"])
 app.include_router(reportes_router, prefix="/api/reportes", tags=["Reportes"])
 app.include_router(cuentas_router, prefix="/api/cuentas", tags=["Plan de Cuentas"])
+app.include_router(periodos_router, prefix="/api/periodos", tags=["Periodos Contables"])
 
 @app.get("/", tags=["Health"])
 def health_check():

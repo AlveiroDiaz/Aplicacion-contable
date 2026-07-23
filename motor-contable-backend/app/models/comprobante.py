@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Date, Numeric, ForeignKey, DateTime, func
+from sqlalchemy import Column, String, Date, Numeric, ForeignKey, DateTime, Boolean, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -14,9 +14,10 @@ class Comprobante(Base):
     fecha = Column(Date, nullable=False)
     descripcion = Column(String, nullable=False)
     estado = Column(String, default="BORRADOR") # BORRADOR, CONTABILIZADO, ANULADO
+    revertido = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relación para acceder a los movimientos desde el comprobante
+    periodo = relationship("PeriodoContable", back_populates="comprobantes")
     movimientos = relationship("MovimientoContable", back_populates="comprobante")
 
 class MovimientoContable(Base):

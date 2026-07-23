@@ -1,6 +1,7 @@
 import uuid
 from sqlalchemy import Column, Integer, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 class PeriodoContable(Base):
@@ -12,7 +13,8 @@ class PeriodoContable(Base):
     mes = Column(Integer, nullable=False)
     cerrado = Column(Boolean, default=False)
 
-    # Evita que existan dos periodos iguales para la misma empresa
+    comprobantes = relationship("Comprobante", back_populates="periodo", cascade="all, delete-orphan")
+
     __table_args__ = (
         UniqueConstraint('empresa_id', 'anio', 'mes', name='uq_empresa_periodo'),
     )
