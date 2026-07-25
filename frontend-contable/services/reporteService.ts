@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { apiFetch } from "./apiClient";
 
 // El backend expone estos campos como Decimal, que FastAPI serializa a
 // JSON como STRING (ej. "1190000.00"), no como número, precisamente para
@@ -40,11 +40,8 @@ export const ReporteService = {
     if (fechaInicio) params.append("fecha_inicio", fechaInicio);
     if (fechaFin) params.append("fecha_fin", fechaFin);
 
-    const response = await fetch(`${API_URL}/reportes/libro-mayor?${params.toString()}`, {
+    const response = await apiFetch(`/reportes/libro-mayor?${params.toString()}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
     if (!response.ok) {

@@ -1,0 +1,23 @@
+from typing import Optional
+from uuid import UUID
+from pydantic import BaseModel
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class UsuarioResponse(BaseModel):
+    id: UUID
+    username: str
+    nombre: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    usuario: UsuarioResponse

@@ -12,6 +12,7 @@ finalizar, así que la base de datos de pruebas queda limpia entre tests sin
 necesidad de recrear el esquema cada vez.
 """
 import os
+import uuid
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
@@ -46,10 +47,12 @@ _ensure_database_exists(TEST_DATABASE_URL)
 # Importar la app DESPUÉS de fijar DATABASE_URL: main.py crea el engine y las
 # tablas (Base.metadata.create_all) leyendo settings.DATABASE_URL en el import.
 from app.core.database import engine, get_db  # noqa: E402
+from app.core.security import obtener_usuario_actual  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models.empresa import Empresa  # noqa: E402
 from app.models.cuenta import PlanCuentas  # noqa: E402
 from app.models.periodo import PeriodoContable  # noqa: E402
+from app.models.usuario import Usuario  # noqa: E402
 from app.services.exogena_service import calcular_dv_nit  # noqa: E402
 
 
@@ -86,13 +89,23 @@ def db():
 def client(db):
     """TestClient que reutiliza la sesión de `db`, para que lo que el test
     prepara con `db` y lo que ocurre a través del API queden en la misma
-    transacción (y se revierta todo junto al final)."""
+    transacción (y se revierta todo junto al final).
+
+    También bypassea la autenticación JWT (igual que se bypassea la BD real
+    vía get_db): la mayoría de los tests existentes verifican reglas de
+    negocio, no el login en sí, así que no tiene sentido obligarlos a hacer
+    un login real. El flujo de auth de verdad se prueba aparte, en
+    test_auth_api.py, con un cliente que NO usa este override."""
     from fastapi.testclient import TestClient
 
     def _override_get_db():
         yield db
 
+    def _override_usuario_actual():
+        return Usuario(id=uuid.uuid4(), username="suite.pruebas", nombre="Suite de pruebas", activo=True)
+
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[obtener_usuario_actual] = _override_usuario_actual
     try:
         with TestClient(app) as test_client:
             yield test_client

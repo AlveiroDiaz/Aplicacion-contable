@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { AuthService, Usuario } from "../services/authService";
 
 const items = [
   {
@@ -53,7 +55,7 @@ const items = [
   },
   {
     href: "/reportes",
-    label: "Reportes",
+    label: "Libro Mayor",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0">
         <line x1="18" y1="20" x2="18" y2="10" />
@@ -78,6 +80,17 @@ const items = [
 
 export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+
+  useEffect(() => {
+    setUsuario(AuthService.obtenerUsuario());
+  }, []);
+
+  const cerrarSesion = () => {
+    AuthService.cerrarSesion();
+    router.push("/login");
+  };
 
   return (
     <aside
@@ -135,8 +148,25 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
           );
         })}
       </nav>
-      <div className="p-4 border-t text-xs" style={{ borderColor: "var(--sidebar-border)", color: "var(--sidebar-fg)", opacity: 0.6 }}>
-        {!collapsed ? "Prueba técnica - Alveiro Diaz" : ""}
+      <div className="border-t p-3" style={{ borderColor: "var(--sidebar-border)" }}>
+        {!collapsed && usuario && (
+          <p className="mb-2 truncate px-1 text-xs" style={{ color: "var(--sidebar-fg)", opacity: 0.7 }}>
+            {usuario.nombre || usuario.username}
+          </p>
+        )}
+        <button
+          onClick={cerrarSesion}
+          title="Cerrar sesión"
+          className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--sidebar-hover)]"
+          style={{ color: "var(--sidebar-fg)" }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          {!collapsed && <span className="whitespace-nowrap">Cerrar sesión</span>}
+        </button>
       </div>
     </aside>
   );

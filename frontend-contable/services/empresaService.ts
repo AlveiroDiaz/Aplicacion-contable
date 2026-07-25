@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { apiFetch } from "./apiClient";
 
 export interface Empresa {
   id: string;
@@ -9,12 +9,8 @@ export interface Empresa {
 
 export const EmpresaService = {
   obtenerTodas: async (): Promise<Empresa[]> => {
-    // Apuntamos al endpoint que acabas de probar
-    const response = await fetch(`${API_URL}/empresas/`, {
+    const response = await apiFetch(`/empresas/`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
     if (!response.ok) {

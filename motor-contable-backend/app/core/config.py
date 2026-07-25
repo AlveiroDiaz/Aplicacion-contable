@@ -10,6 +10,13 @@ class Settings(BaseSettings):
     UVT_SOURCE_URL: str = ""
     UVT_REFRESH_INTERVAL_DAYS: int = 30
 
+    # Autenticación JWT. JWT_SECRET_KEY debe sobreescribirse vía variable de
+    # entorno en cualquier entorno real (ver docker-compose.yml); el valor
+    # por defecto solo sirve para desarrollo local.
+    JWT_SECRET_KEY: str = "clave-de-desarrollo-cambiar-en-produccion"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_MINUTES: int = 480
+
     class Config:
         case_sensitive = True
 

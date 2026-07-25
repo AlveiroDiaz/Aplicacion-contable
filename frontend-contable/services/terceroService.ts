@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { apiFetch } from "./apiClient";
 
 export interface Tercero {
   id: string;
@@ -20,9 +20,8 @@ export const TerceroService = {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
 
-    const response = await fetch(`${API_URL}/terceros/?${params.toString()}`, {
+    const response = await apiFetch(`/terceros/?${params.toString()}`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
     });
 
     const data = await response.json();
@@ -31,9 +30,8 @@ export const TerceroService = {
   },
 
   crear: async (payload: TerceroCreate): Promise<Tercero> => {
-    const response = await fetch(`${API_URL}/terceros/`, {
+    const response = await apiFetch(`/terceros/`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 

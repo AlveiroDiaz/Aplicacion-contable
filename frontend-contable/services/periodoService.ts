@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { apiFetch } from "./apiClient";
 
 export interface PeriodoResponse {
   id: string;
@@ -22,11 +22,8 @@ export const PeriodoService = {
     if (empresaId) params.set("empresa_id", empresaId);
     if (cerrado !== undefined) params.set("cerrado", String(cerrado));
 
-    const response = await fetch(`${API_URL}/periodos/?${params.toString()}`, {
+    const response = await apiFetch(`/periodos/?${params.toString()}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
     const data = await response.json();
@@ -39,11 +36,8 @@ export const PeriodoService = {
   },
 
   cerrar: async (payload: PeriodoCerrarRequest): Promise<PeriodoCerrarResponse> => {
-    const response = await fetch(`${API_URL}/periodos/cerrar`, {
+    const response = await apiFetch(`/periodos/cerrar`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(payload),
     });
 

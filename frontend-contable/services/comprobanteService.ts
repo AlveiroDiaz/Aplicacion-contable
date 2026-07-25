@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { apiFetch } from "./apiClient";
 
 export interface ComprobanteResponse {
   id: string;
@@ -30,11 +30,8 @@ export interface ComprobanteReverseResponse {
 
 export const ComprobanteService = {
   contabilizar: async (payload: any) => {
-    const response = await fetch(`${API_URL}/comprobantes/contabilizar`, {
+    const response = await apiFetch(`/comprobantes/contabilizar`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(payload),
     });
 
@@ -48,11 +45,8 @@ export const ComprobanteService = {
   },
 
   guardarBorrador: async (payload: any): Promise<ComprobanteResponse> => {
-    const response = await fetch(`${API_URL}/comprobantes/borrador`, {
+    const response = await apiFetch(`/comprobantes/borrador`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(payload),
     });
 
@@ -66,11 +60,8 @@ export const ComprobanteService = {
   },
 
   actualizarBorrador: async (id: string, payload: any): Promise<ComprobanteResponse> => {
-    const response = await fetch(`${API_URL}/comprobantes/${id}/borrador`, {
+    const response = await apiFetch(`/comprobantes/${id}/borrador`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(payload),
     });
 
@@ -84,11 +75,8 @@ export const ComprobanteService = {
   },
 
   contabilizarBorrador: async (id: string) => {
-    const response = await fetch(`${API_URL}/comprobantes/${id}/contabilizar`, {
+    const response = await apiFetch(`/comprobantes/${id}/contabilizar`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
     const data = await response.json();
@@ -105,11 +93,8 @@ export const ComprobanteService = {
     if (empresaId) params.set("empresa_id", empresaId);
     if (consecutivo) params.set("consecutivo", consecutivo);
 
-    const response = await fetch(`${API_URL}/comprobantes/?${params.toString()}`, {
+    const response = await apiFetch(`/comprobantes/?${params.toString()}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
     const data = await response.json();
@@ -122,11 +107,8 @@ export const ComprobanteService = {
   },
 
   obtener: async (id: string): Promise<ComprobanteResponse> => {
-    const response = await fetch(`${API_URL}/comprobantes/${id}`, {
+    const response = await apiFetch(`/comprobantes/${id}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
     const data = await response.json();
@@ -139,11 +121,8 @@ export const ComprobanteService = {
   },
 
   revertir: async (id: string): Promise<ComprobanteReverseResponse> => {
-    const response = await fetch(`${API_URL}/comprobantes/${id}/revertir`, {
+    const response = await apiFetch(`/comprobantes/${id}/revertir`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
     const data = await response.json();

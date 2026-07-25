@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { apiFetch } from "./apiClient";
 
 export interface ExogenaGeneratePayload {
   empresa_id: string;
@@ -24,11 +24,8 @@ export interface ExogenaHistoryItem {
 
 export const ExogenaService = {
   generar: async (payload: ExogenaGeneratePayload): Promise<{ blob: Blob; filename: string }> => {
-    const response = await fetch(`${API_URL}/exogena/generar`, {
+    const response = await apiFetch(`/exogena/generar`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(payload),
     });
 
@@ -45,11 +42,8 @@ export const ExogenaService = {
   },
 
   obtenerHistorial: async (): Promise<ExogenaHistoryItem[]> => {
-    const response = await fetch(`${API_URL}/exogena/historial`, {
+    const response = await apiFetch(`/exogena/historial`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
     if (!response.ok) {
@@ -60,7 +54,7 @@ export const ExogenaService = {
   },
 
   redescargar: async (id: string): Promise<{ blob: Blob; filename: string }> => {
-    const response = await fetch(`${API_URL}/exogena/historial/${id}/archivo`, {
+    const response = await apiFetch(`/exogena/historial/${id}/archivo`, {
       method: "GET",
     });
 
