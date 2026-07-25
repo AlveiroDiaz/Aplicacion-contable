@@ -34,6 +34,19 @@ def test_linea_no_admite_valores_negativos():
         MovimientoCreate(**_linea(debito=Decimal("-1")))
 
 
+def test_linea_no_admite_mas_de_dos_decimales():
+    # Regla 3.3.2: "valores válidos (positivos, sin decimales excesivos)".
+    # Sin esta validación, Postgres redondearía el valor en silencio al
+    # guardar (Numeric(20,2)) en vez de rechazarlo con un mensaje claro.
+    with pytest.raises(ValidationError):
+        MovimientoCreate(**_linea(debito=Decimal("100.126")))
+
+
+def test_linea_admite_hasta_dos_decimales():
+    linea = MovimientoCreate(**_linea(debito=Decimal("100.12")))
+    assert linea.debito == Decimal("100.12")
+
+
 def test_comprobante_requiere_minimo_dos_lineas():
     with pytest.raises(ValidationError):
         ComprobanteCreate(

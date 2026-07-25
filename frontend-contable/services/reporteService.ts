@@ -1,20 +1,27 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// El backend expone estos campos como Decimal, que FastAPI serializa a
+// JSON como STRING (ej. "1190000.00"), no como número, precisamente para
+// no perder precisión pasando por punto flotante en el wire format. Se
+// tipan como string aquí a propósito: conviértelos con Number(...) solo
+// en el último momento, para mostrarlos.
 export interface MovimientoLibroMayor {
   fecha: string;
   comprobante_consecutivo: string;
   descripcion_comprobante: string;
   descripcion_movimiento: string | null;
-  debito: number;
-  credito: number;
+  tercero: string | null;
+  debito: string;
+  credito: string;
+  saldo_acumulado: string;
 }
 
 export interface LibroMayorResponse {
   cuenta_codigo: string;
   cuenta_nombre: string;
-  total_debito: number;
-  total_credito: number;
-  saldo_final: number;
+  total_debito: string;
+  total_credito: string;
+  saldo_final: string;
   movimientos: MovimientoLibroMayor[];
 }
 

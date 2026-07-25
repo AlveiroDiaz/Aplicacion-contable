@@ -2,8 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.core.database import get_db
-from app.schemas.comprobante import ComprobanteCreate, ComprobanteResponse, ComprobanteReverseResponse
-from app.services.comprobante_service import contabilizar_comprobante, revertir_comprobante
+from app.schemas.comprobante import ComprobanteCreate, ComprobanteBorradorCreate, ComprobanteResponse, ComprobanteReverseResponse
+from app.services.comprobante_service import (
+    contabilizar_comprobante,
+    crear_borrador,
+    actualizar_borrador,
+    contabilizar_borrador,
+    revertir_comprobante,
+)
 from app.models.comprobante import Comprobante
 from uuid import UUID
 
@@ -54,6 +60,51 @@ def crear_comprobante(comprobante_in: ComprobanteCreate, db: Session = Depends(g
         db.rollback()
         raise http_exc
     except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error interno del servidor al contabilizar.")
+
+@router.post("/borrador", response_model=ComprobanteResponse)
+def guardar_borrador(comprobante_in: ComprobanteBorradorCreate, db: Session = Depends(get_db)):
+    try:
+        comprobante = crear_borrador(db, comprobante_in)
+        db.commit()
+        db.refresh(comprobante)
+        return comprobante
+    except HTTPException as http_exc:
+        db.rollback()
+        raise http_exc
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error interno del servidor al guardar el borrador.")
+
+@router.put("/{comprobante_id}/borrador", response_model=ComprobanteResponse)
+def actualizar_borrador_endpoint(comprobante_id: UUID, comprobante_in: ComprobanteBorradorCreate, db: Session = Depends(get_db)):
+    try:
+        comprobante = actualizar_borrador(db, comprobante_id, comprobante_in)
+        db.commit()
+        db.refresh(comprobante)
+        return comprobante
+    except HTTPException as http_exc:
+        db.rollback()
+        raise http_exc
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error interno del servidor al actualizar el borrador.")
+
+@router.post("/{comprobante_id}/contabilizar")
+def contabilizar_borrador_endpoint(comprobante_id: UUID, db: Session = Depends(get_db)):
+    try:
+        comprobante = contabilizar_borrador(db, comprobante_id)
+        db.commit()
+        return {
+            "mensaje": "Comprobante contabilizado con éxito",
+            "consecutivo": comprobante.consecutivo,
+            "id": comprobante.id
+        }
+    except HTTPException as http_exc:
+        db.rollback()
+        raise http_exc
+    except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Error interno del servidor al contabilizar.")
 

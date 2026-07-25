@@ -1,3 +1,4 @@
+from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -17,9 +18,12 @@ class MovimientoLibroMayorResponse(BaseModel):
     descripcion_comprobante: str
     descripcion_movimiento: Optional[str]
     tercero: Optional[str]
-    debito: float
-    credito: float
-    saldo_acumulado: float
+    # Decimal, no float: los montos no deben pasar por punto flotante en
+    # ninguna capa (Escenario 5). Pydantic serializa Decimal a JSON
+    # preservando los dígitos exactos, sin el redondeo binario de float().
+    debito: Decimal
+    credito: Decimal
+    saldo_acumulado: Decimal
 
     class Config:
         from_attributes = True
@@ -27,9 +31,9 @@ class MovimientoLibroMayorResponse(BaseModel):
 class LibroMayorResponse(BaseModel):
     cuenta_codigo: str
     cuenta_nombre: str
-    total_debito: float
-    total_credito: float
-    saldo_final: float
+    total_debito: Decimal
+    total_credito: Decimal
+    saldo_final: Decimal
     movimientos: List[MovimientoLibroMayorResponse]
 
 @router.get("/libro-mayor", response_model=LibroMayorResponse)
@@ -65,13 +69,13 @@ def consultar_libro_mayor(
     resultados = query.order_by(Comprobante.fecha, Comprobante.consecutivo).all()
 
     movimientos_lista = []
-    t_debito = 0.0
-    t_credito = 0.0
-    saldo_corriendo = 0.0
+    t_debito = Decimal("0.00")
+    t_credito = Decimal("0.00")
+    saldo_corriendo = Decimal("0.00")
 
     for mov, comp in resultados:
-        debito = float(mov.debito)
-        credito = float(mov.credito)
+        debito = mov.debito or Decimal("0.00")
+        credito = mov.credito or Decimal("0.00")
         t_debito += debito
         t_credito += credito
         saldo_corriendo += debito - credito

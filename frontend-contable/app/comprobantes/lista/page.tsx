@@ -173,7 +173,7 @@ export default function ListaComprobantesPage() {
                 comprobantes.map((comp) => (
                   <tr key={comp.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3 font-mono text-xs font-medium text-gray-900 dark:text-gray-100">
-                      {comp.consecutivo}
+                      {comp.consecutivo || <span className="italic text-gray-400 dark:text-gray-500">Sin asignar</span>}
                     </td>
                     <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                       {formatearFecha(comp.fecha)}
@@ -210,7 +210,7 @@ export default function ListaComprobantesPage() {
                         <button
                           onClick={() => router.push(`/comprobantes/nuevo?view=${comp.id}`)}
                           className="rounded-lg p-1.5 text-gray-600 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-                          title="Ver detalle"
+                          title={comp.estado === "BORRADOR" ? "Editar borrador" : "Ver detalle"}
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />

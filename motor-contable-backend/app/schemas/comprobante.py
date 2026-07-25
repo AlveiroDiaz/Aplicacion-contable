@@ -7,8 +7,12 @@ from decimal import Decimal
 class MovimientoCreate(BaseModel):
     cuenta_codigo: str
     tercero_id: Optional[UUID] = None
-    debito: Decimal = Field(default=Decimal('0.00'), ge=0)
-    credito: Decimal = Field(default=Decimal('0.00'), ge=0)
+    # max_digits/decimal_places reflejan la columna Numeric(20,2) y hacen
+    # explícita la regla 3.3.2 ("sin decimales excesivos"): sin esto, un
+    # valor como 100.126 pasaría la validación y Postgres lo redondearía
+    # en silencio al guardar, en vez de rechazarse con un mensaje claro.
+    debito: Decimal = Field(default=Decimal('0.00'), ge=0, max_digits=20, decimal_places=2)
+    credito: Decimal = Field(default=Decimal('0.00'), ge=0, max_digits=20, decimal_places=2)
     descripcion: Optional[str] = None
 
     @field_validator('credito')
@@ -36,6 +40,35 @@ class ComprobanteCreate(BaseModel):
             raise ValueError(f'El comprobante está desbalanceado. Débitos: {total_debito}, Créditos: {total_credito}')
         return movimientos
 
+
+class MovimientoBorradorCreate(BaseModel):
+    """Línea de un comprobante en BORRADOR: puede estar incompleta (sin
+    valor todavía) mientras se compone, pero nunca puede tener débito y
+    crédito simultáneos ni valores negativos."""
+    cuenta_codigo: str
+    tercero_id: Optional[UUID] = None
+    debito: Decimal = Field(default=Decimal('0.00'), ge=0)
+    credito: Decimal = Field(default=Decimal('0.00'), ge=0)
+    descripcion: Optional[str] = None
+
+    @field_validator('credito')
+    def validate_no_simultaneo(cls, credito, info):
+        debito = info.data.get('debito', Decimal('0.00'))
+        if debito > 0 and credito > 0:
+            raise ValueError('Una línea no puede tener valores en débito y crédito simultáneamente')
+        return credito
+
+
+class ComprobanteBorradorCreate(BaseModel):
+    """A diferencia de ComprobanteCreate, NO exige mínimo de líneas ni
+    partida doble: un borrador es, por definición, un comprobante que
+    todavía puede estar incompleto o desbalanceado. Esas reglas se aplican
+    recién al contabilizar (ver contabilizar_borrador)."""
+    empresa_id: UUID
+    fecha: date
+    descripcion: str
+    movimientos: List[MovimientoBorradorCreate] = []
+
 class MovimientoResponse(BaseModel):
     id: UUID
     cuenta_codigo: str
@@ -51,7 +84,7 @@ class ComprobanteResponse(BaseModel):
     id: UUID
     empresa_id: UUID
     periodo_id: UUID
-    consecutivo: str
+    consecutivo: Optional[str] = None
     fecha: date
     descripcion: str
     estado: str

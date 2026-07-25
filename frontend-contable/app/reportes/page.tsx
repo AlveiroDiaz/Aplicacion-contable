@@ -113,14 +113,14 @@ export default function ReportesPage() {
     }
   };
 
-  const formatearMonto = (valor: number) => {
-    return valor.toLocaleString("es-CO", {
+  const formatearMonto = (valor: string | number) => {
+    return Number(valor).toLocaleString("es-CO", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
   };
 
-  const esPositivo = (valor: number) => valor >= 0;
+  const esPositivo = (valor: string | number) => Number(valor) >= 0;
 
   return (
     <div className="mx-auto max-w-5xl p-6">
@@ -329,10 +329,10 @@ export default function ReportesPage() {
                             {mov.tercero ?? "—"}
                           </td>
                           <td className="px-4 py-3 text-right font-mono text-gray-900 dark:text-gray-100">
-                            {mov.debito ? "$ " + formatearMonto(mov.debito) : "—"}
+                            {Number(mov.debito) ? "$ " + formatearMonto(mov.debito) : "—"}
                           </td>
                           <td className="px-4 py-3 text-right font-mono text-gray-900 dark:text-gray-100">
-                            {mov.credito ? "$ " + formatearMonto(mov.credito) : "—"}
+                            {Number(mov.credito) ? "$ " + formatearMonto(mov.credito) : "—"}
                           </td>
                           <td className="px-4 py-3 text-right font-mono text-gray-900 dark:text-gray-100">
                             $ {formatearMonto(mov.saldo_acumulado)}

@@ -13,6 +13,9 @@ export default function NuevoComprobantePage() {
   const viewId = searchParams.get("view");
   const [loadingComprobante, setLoadingComprobante] = useState(false);
   const [soloLectura, setSoloLectura] = useState(false);
+  const [comprobanteId, setComprobanteId] = useState<string | null>(null);
+  const [guardandoBorrador, setGuardandoBorrador] = useState(false);
+  const [contabilizando, setContabilizando] = useState(false);
 
   useEffect(() => {
     if (!viewId) return;
@@ -32,56 +35,96 @@ export default function NuevoComprobantePage() {
             descripcion: m.descripcion || "",
           })) || []
         );
-        setSoloLectura(true);
+        setComprobanteId(data.id);
+        // Un borrador sigue siendo editable; solo lo ya contabilizado (o
+        // anulado) queda protegido de modificaciones (regla 3.3.7).
+        setSoloLectura(data.estado !== "BORRADOR");
       })
       .catch(() => AlertService.error("Error al cargar el comprobante"))
       .finally(() => setLoadingComprobante(false));
   }, [viewId]);
 
-  const contabilizar = async () => {
+  const construirMovimientos = () =>
+    contabilidad.movimientos.map((m) => ({
+      cuenta_codigo: m.cuenta_codigo,
+      tercero_id: m.tercero_id || null,
+      debito: Number(m.debito) || 0,
+      credito: Number(m.credito) || 0,
+      descripcion: m.descripcion,
+    }));
+
+  const guardarBorrador = async () => {
+    if (!contabilidad.empresaId) {
+      AlertService.error("Debes seleccionar una empresa antes de guardar el borrador.");
+      return;
+    }
+
+    // Un borrador puede estar incompleto: solo se envían las líneas donde
+    // ya se eligió una cuenta (una fila totalmente vacía no tiene sentido
+    // persistirla).
+    const payload = {
+      empresa_id: contabilidad.empresaId,
+      fecha: contabilidad.fecha,
+      descripcion: contabilidad.descripcion,
+      movimientos: construirMovimientos().filter((m) => m.cuenta_codigo.trim() !== ""),
+    };
+
+    setGuardandoBorrador(true);
     try {
-      if (!contabilidad.empresaId) {
-        AlertService.error("Debes seleccionar una empresa antes de contabilizar.");
-        return;
-      }
+      const data = comprobanteId
+        ? await ComprobanteService.actualizarBorrador(comprobanteId, payload)
+        : await ComprobanteService.guardarBorrador(payload);
+      setComprobanteId(data.id);
+      AlertService.success("Borrador guardado.");
+    } catch (error: any) {
+      AlertService.error(error.message || "Ocurrió un error inesperado al guardar el borrador");
+    } finally {
+      setGuardandoBorrador(false);
+    }
+  };
 
-      const payload = {
-        empresa_id: contabilidad.empresaId,
-        fecha: contabilidad.fecha,
-        descripcion: contabilidad.descripcion,
-        movimientos: contabilidad.movimientos.map((m) => ({
-          cuenta_codigo: m.cuenta_codigo,
-          tercero_id: m.tercero_id || null,
-          debito: Number(m.debito),
-          credito: Number(m.credito),
-          descripcion: m.descripcion,
-        })),
-      };
+  const contabilizar = async () => {
+    if (!contabilidad.empresaId) {
+      AlertService.error("Debes seleccionar una empresa antes de contabilizar.");
+      return;
+    }
 
-      const data = await ComprobanteService.contabilizar(payload);
+    setContabilizando(true);
+    try {
+      const data = comprobanteId
+        ? await ComprobanteService.contabilizarBorrador(comprobanteId)
+        : await ComprobanteService.contabilizar({
+            empresa_id: contabilidad.empresaId,
+            fecha: contabilidad.fecha,
+            descripcion: contabilidad.descripcion,
+            movimientos: construirMovimientos(),
+          });
+
       AlertService.success(`¡Comprobante generado! Consecutivo: ${data.consecutivo}`);
+      setSoloLectura(true);
     } catch (error: any) {
       console.error("Error en la transacción:", error);
       AlertService.error(error.message || "Ocurrió un error inesperado al contabilizar");
+    } finally {
+      setContabilizando(false);
     }
   };
+
+  const titulo = soloLectura ? "Visualización de Comprobante" : comprobanteId ? "Editar Borrador" : "Nuevo Comprobante";
+  const subtitulo = soloLectura
+    ? "Consulta la información del comprobante seleccionado."
+    : "Completa la información general y agrega los movimientos del asiento contable.";
 
   return (
     <div className="mx-auto max-w-5xl p-6">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {soloLectura ? "Visualización de Comprobante" : "Nuevo Comprobante"}
-          </h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {soloLectura
-              ? "Consulta la información del comprobante seleccionado."
-              : "Completa la información general y agrega los movimientos del asiento contable."}
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{titulo}</h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{subtitulo}</p>
         </div>
         {!soloLectura && (
           <span className="inline-flex items-center gap-2 rounded-lg border border-blue-600 px-3 py-1.5 text-xs font-medium text-blue-600">
-            Modo edición
+            {comprobanteId ? "Borrador" : "Modo edición"}
           </span>
         )}
       </div>
@@ -201,16 +244,28 @@ export default function NuevoComprobantePage() {
           </div>
 
           {!soloLectura && (
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={guardarBorrador}
+                disabled={guardandoBorrador || contabilizando}
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                  <polyline points="17 21 17 13 7 13 7 21" />
+                  <polyline points="7 3 7 8 15 8" />
+                </svg>
+                {guardandoBorrador ? "Guardando..." : "Guardar borrador"}
+              </button>
               <button
                 onClick={contabilizar}
-                disabled={!contabilidad.esValido}
+                disabled={!contabilidad.esValido || guardandoBorrador || contabilizando}
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-                Contabilizar comprobante
+                {contabilizando ? "Contabilizando..." : "Contabilizar comprobante"}
               </button>
             </div>
           )}

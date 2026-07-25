@@ -13,6 +13,11 @@ interface Props {
   deshabilitarCampos?: boolean;
 }
 
+// El backend (Numeric(20,2) + Field(decimal_places=2)) rechaza más de dos
+// decimales al contabilizar; se redondea aquí también para no dejar que el
+// usuario escriba un valor que de todos modos se va a rechazar más tarde.
+const redondearA2Decimales = (valor: number) => Math.round(valor * 100) / 100;
+
 const inputBase =
   "h-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-blue-400 dark:focus:ring-blue-400/20";
 
@@ -182,7 +187,7 @@ export function LineaContable({ movimiento, onEliminar, onActualizar, deshabilit
           value={movimiento.debito || ""}
           onChange={(e) => {
             if (!deshabilitarCampos) {
-              const val = Math.max(0, Number(e.target.value));
+              const val = redondearA2Decimales(Math.max(0, Number(e.target.value)));
               onActualizar(movimiento.id, "debito", val);
             }
           }}
@@ -201,7 +206,7 @@ export function LineaContable({ movimiento, onEliminar, onActualizar, deshabilit
           value={movimiento.credito || ""}
           onChange={(e) => {
             if (!deshabilitarCampos) {
-              const val = Math.max(0, Number(e.target.value));
+              const val = redondearA2Decimales(Math.max(0, Number(e.target.value)));
               onActualizar(movimiento.id, "credito", val);
             }
           }}

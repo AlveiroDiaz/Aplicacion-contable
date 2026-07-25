@@ -4,7 +4,7 @@ export interface ComprobanteResponse {
   id: string;
   empresa_id: string;
   periodo_id: string;
-  consecutivo: string;
+  consecutivo: string | null;
   fecha: string;
   descripcion: string;
   estado: string;
@@ -42,6 +42,59 @@ export const ComprobanteService = {
 
     if (!response.ok) {
       throw new Error(data.detail || "Error al comunicarse con el servidor");
+    }
+
+    return data;
+  },
+
+  guardarBorrador: async (payload: any): Promise<ComprobanteResponse> => {
+    const response = await fetch(`${API_URL}/comprobantes/borrador`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Error al guardar el borrador");
+    }
+
+    return data;
+  },
+
+  actualizarBorrador: async (id: string, payload: any): Promise<ComprobanteResponse> => {
+    const response = await fetch(`${API_URL}/comprobantes/${id}/borrador`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Error al actualizar el borrador");
+    }
+
+    return data;
+  },
+
+  contabilizarBorrador: async (id: string) => {
+    const response = await fetch(`${API_URL}/comprobantes/${id}/contabilizar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Error al contabilizar el borrador");
     }
 
     return data;
