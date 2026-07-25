@@ -1,3 +1,4 @@
+import logging
 from datetime import date, datetime
 from decimal import Decimal
 from typing import List, Optional
@@ -21,6 +22,8 @@ from app.services.exogena_service import (
     validar_nit_con_dv,
     construir_parametros,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Exógena"])
 
@@ -55,7 +58,6 @@ def generar_exogena(
 ):
     try:
         empresa = db.query(Empresa).filter(Empresa.id == payload.empresa_id).first()
-        print("Empresa encontrada:", empresa.dv )
         if not empresa:
             raise HTTPException(status_code=404, detail="Empresa no encontrada")
 
@@ -71,8 +73,6 @@ def generar_exogena(
             Comprobante.empresa_id == payload.empresa_id,
             extract("year", Comprobante.fecha) == payload.anio_gravable,
         )
-
-        print("Query de movimientos construida:", query)
 
         if payload.fecha_inicio:
             query = query.filter(Comprobante.fecha >= payload.fecha_inicio)
@@ -109,7 +109,7 @@ def generar_exogena(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error al generar exógena: {e}")
+        logger.exception("Error al generar el archivo de exógena")
         raise HTTPException(status_code=500, detail="Error interno al generar el archivo de exógena.") from e
 
 

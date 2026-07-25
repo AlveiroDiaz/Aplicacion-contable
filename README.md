@@ -54,14 +54,14 @@ Esto levanta tres contenedores:
 - `backend`: FastAPI en `http://localhost:8000`.
 - `frontend`: Next.js en `http://localhost:3000`.
 
-El backend crea las tablas solo (ver "Migraciones" abajo) y siembra un usuario de prueba:
+El backend crea las tablas solo (ver "Migraciones" abajo) y siembra datos de demostración automáticamente, para no tener que crear nada a mano antes de poder probar:
 
-```
-usuario: admin
-contraseña: admin123
-```
+- Un usuario: `admin` / `admin123`.
+- Una empresa ("Empresa Demo SAS"), su plan de cuentas básico y un período abierto.
+- Dos terceros (un proveedor y un cliente).
+- Un comprobante ya contabilizado con un tercero, por un valor que supera el umbral típico de exógena (42 UVT) — así la exógena tiene algo real que reportar desde el primer intento.
 
-Con eso ya puedes entrar a `http://localhost:3000` y usar la app.
+Todo esto es idempotente: si reinicias el contenedor no se duplica (se siembra una sola vez, buscando por NIT). Con eso ya puedes entrar a `http://localhost:3000` y usar la app de punta a punta, incluida la generación de exógena.
 
 ### Opción B — Manual (backend y frontend por separado)
 
@@ -169,7 +169,7 @@ Cerrar un período es sencillo (`POST /api/periodos/cerrar`), pero reabrirlo no 
 
 - **Sin Alembic**: las tablas se crean con `create_all()`, no hay historial de migraciones versionado. Ver sección de pendientes.
 - **`consecutivo` sin constraint único en la base de datos**: la unicidad depende del bloqueo de fila (`SELECT FOR UPDATE`) en la aplicación, probado y funcionando, pero sin una red de seguridad a nivel de esquema si esa lógica cambiara por error.
-- **El código de cuenta (`plan_cuentas.codigo`) es único globalmente, no por empresa.** Aunque cada cuenta tiene una columna `empresa_id`, la llave primaria es solo el código — dos empresas no podrían tener ambas una cuenta `"1105"` en la base actual. Para el alcance de esta prueba (probablemente una sola empresa a la vez) no genera problemas, pero es una limitación real para un caso multiempresa serio.
+- **El código de cuenta (`plan_cuentas.codigo`) es único globalmente, no por empresa.** Aunque cada cuenta tiene una columna `empresa_id`, la llave primaria es solo el código — dos empresas no podrían tener ambas una cuenta `"1105"` en la base actual. No es solo teórico: me topé con esto de frente al escribir el seed de datos de demostración (`app/core/seed.py`), que por eso usa códigos con prefijo `DEMO-` en vez de códigos contables "normales" — para no arriesgarme a chocar con cuentas que crees después para tu propia empresa. Para el alcance de esta prueba (probablemente una sola empresa a la vez) no genera problemas, pero es una limitación real para un caso multiempresa serio.
 - **Sin gestión visual de terceros**: se pueden crear por API (`POST /api/terceros`) y elegir en el selector del comprobante, pero no hay una pantalla en el frontend para crear uno nuevo directamente.
 - **Sin pruebas automatizadas de frontend.**
 - **El estado `ANULADO` de un comprobante está contemplado en el modelo pero ningún flujo lo asigna todavía** — quedó reservado para una eventual funcionalidad de anulación distinta a la reversión.

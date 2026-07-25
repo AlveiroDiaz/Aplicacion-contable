@@ -1,10 +1,21 @@
+import logging
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+
+# Sin esto, logger.info(...) en cualquier módulo (ver exogena_service.py,
+# uvt_service.py) queda silenciado: Python solo muestra WARNING o superior
+# cuando no se configura logging explícitamente, así que la trazabilidad
+# de la regla 6.2.12 ("excluir con trazabilidad en el log") nunca llegaba
+# a la consola aunque el código sí la ejecutara.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 from app.core.database import engine, Base
 from app.core.database import Base
 from app.core.security import obtener_usuario_actual
-from app.core.seed import seed_admin_user
+from app.core.seed import seed_admin_user, seed_datos_demo
 from app.models.empresa import Empresa
 from app.models.cuenta import PlanCuentas
 from app.models.periodo import PeriodoContable
@@ -30,6 +41,11 @@ Base.metadata.create_all(bind=engine)
 # Usuario admin/admin123 para poder entrar al login recién levantado el
 # proyecto (ver app/core/seed.py). Idempotente: no duplica en reinicios.
 seed_admin_user()
+
+# Empresa, plan de cuentas, terceros y un comprobante de ejemplo, para que
+# "docker compose up" solo ya deje algo real con qué probar (incluida la
+# exógena). También idempotente.
+seed_datos_demo()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
