@@ -2,6 +2,12 @@
 
 Módulo contable que permite administrar un plan de cuentas, registrar comprobantes (con partida doble), consultar el libro mayor, y generar el archivo de información exógena. Incluye login con JWT y se levanta completo con Docker Compose.
 
+## Demo en vivo
+
+**http://161.97.86.251:3001** — usuario `admin`, contraseña `admin123`.
+
+Es una instancia real corriendo con Docker Compose en un VPS (no un mock ni capturas de pantalla), con datos de demostración ya cargados (empresa, plan de cuentas, terceros y un comprobante contabilizado) para poder probar todo — incluida la generación de exógena — sin tener que crear nada a mano primero. Es un servidor de prueba para esta entrega, no un servicio con garantía de disponibilidad continua.
+
 ## Cómo explicar este proyecto en 2 minutos
 
 Es un backend en **FastAPI** con una base de datos **PostgreSQL**, y un frontend en **Next.js** que lo consume. La idea central es la contabilidad de partida doble: cada comprobante tiene líneas con débito o crédito, y antes de "contabilizarlo" (dejarlo en firme) el sistema valida que cuadre, que las cuentas existan y estén activas, y que el período no esté cerrado. Una vez contabilizado, un comprobante **no se puede editar ni borrar** — si hay un error, se "revierte" (se crea un comprobante inverso nuevo), para no perder el rastro de lo que pasó.
