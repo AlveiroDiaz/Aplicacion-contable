@@ -90,6 +90,11 @@ class ComprobanteResponse(BaseModel):
     estado: str
     revertido: bool
     created_at: Optional[datetime] = None
+    creado_por_id: Optional[UUID] = None
+    contabilizado_por_id: Optional[UUID] = None
+    contabilizado_en: Optional[datetime] = None
+    revertido_por_id: Optional[UUID] = None
+    revertido_en: Optional[datetime] = None
     movimientos: List[MovimientoResponse]
 
     class Config:

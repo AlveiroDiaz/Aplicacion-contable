@@ -17,6 +17,16 @@ class Comprobante(Base):
     revertido = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # Atribución de usuario para las operaciones relevantes del ciclo de
+    # vida (regla 9.3: "deben ser auditables"). Nullable porque son
+    # posteriores a la creación de la tabla y porque las pruebas que llaman
+    # al service directamente no siempre autentican un usuario.
+    creado_por_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=True)
+    contabilizado_por_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=True)
+    contabilizado_en = Column(DateTime(timezone=True), nullable=True)
+    revertido_por_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=True)
+    revertido_en = Column(DateTime(timezone=True), nullable=True)
+
     periodo = relationship("PeriodoContable", back_populates="comprobantes")
     movimientos = relationship("MovimientoContable", back_populates="comprobante")
 
