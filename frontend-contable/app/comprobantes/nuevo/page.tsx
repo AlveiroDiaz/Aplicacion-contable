@@ -26,6 +26,7 @@ export default function NuevoComprobantePage() {
           data.movimientos?.map((m) => ({
             id: m.id,
             cuenta_codigo: m.cuenta_codigo,
+            tercero_id: m.tercero_id ?? null,
             debito: m.debito,
             credito: m.credito,
             descripcion: m.descripcion || "",
@@ -50,6 +51,7 @@ export default function NuevoComprobantePage() {
         descripcion: contabilidad.descripcion,
         movimientos: contabilidad.movimientos.map((m) => ({
           cuenta_codigo: m.cuenta_codigo,
+          tercero_id: m.tercero_id || null,
           debito: Number(m.debito),
           credito: Number(m.credito),
           descripcion: m.descripcion,
@@ -161,6 +163,7 @@ export default function NuevoComprobantePage() {
                   onActualizar={contabilidad.actualizarLinea}
                   deshabilitarEliminar={soloLectura || contabilidad.movimientos.length <= 2}
                   cuentas={contabilidad.cuentas}
+                  terceros={contabilidad.terceros}
                   deshabilitarCampos={soloLectura}
                 />
               ))}

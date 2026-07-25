@@ -39,13 +39,13 @@ def cerrar_periodo(payload: PeriodoCerrarRequest, db: Session = Depends(get_db))
     if periodo.cerrado:
         raise HTTPException(status_code=400, detail="El período ya está cerrado.")
 
-    comprobantes_abiertos = db.query(Comprobante).filter(
+    comprobantes_pendientes = db.query(Comprobante).filter(
         Comprobante.periodo_id == periodo.id,
-        Comprobante.estado.in_(["BORRADOR", "CONTABILIZADO"])
+        Comprobante.estado == "BORRADOR"
     ).count()
 
-    if comprobantes_abiertos > 0:
-        raise HTTPException(status_code=400, detail="No se puede cerrar el período porque tiene comprobantes pendientes.")
+    if comprobantes_pendientes > 0:
+        raise HTTPException(status_code=400, detail="No se puede cerrar el período porque tiene comprobantes en borrador sin contabilizar.")
 
     periodo.cerrado = True
     db.commit()

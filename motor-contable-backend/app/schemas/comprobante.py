@@ -39,6 +39,7 @@ class ComprobanteCreate(BaseModel):
 class MovimientoResponse(BaseModel):
     id: UUID
     cuenta_codigo: str
+    tercero_id: Optional[UUID] = None
     debito: Decimal
     credito: Decimal
     descripcion: Optional[str] = None

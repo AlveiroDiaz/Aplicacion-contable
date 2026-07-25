@@ -13,6 +13,7 @@ export interface ComprobanteResponse {
   movimientos?: {
     id: string;
     cuenta_codigo: string;
+    tercero_id?: string | null;
     debito: number;
     credito: number;
     descripcion?: string;

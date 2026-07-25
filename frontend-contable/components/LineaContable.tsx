@@ -1,20 +1,22 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Movimiento } from "../hooks/useComprobante";
 import { PlanCuenta } from "../services/planCuentaService";
+import { Tercero } from "../services/terceroService";
 
 interface Props {
   movimiento: Movimiento;
   onEliminar: (id: string) => void;
-  onActualizar: (id: string, campo: keyof Movimiento, valor: string | number) => void;
+  onActualizar: (id: string, campo: keyof Movimiento, valor: string | number | null) => void;
   deshabilitarEliminar: boolean;
   cuentas?: PlanCuenta[];
+  terceros?: Tercero[];
   deshabilitarCampos?: boolean;
 }
 
 const inputBase =
   "h-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-blue-400 dark:focus:ring-blue-400/20";
 
-export function LineaContable({ movimiento, onEliminar, onActualizar, deshabilitarEliminar, cuentas = [], deshabilitarCampos = false }: Props) {
+export function LineaContable({ movimiento, onEliminar, onActualizar, deshabilitarEliminar, cuentas = [], terceros = [], deshabilitarCampos = false }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState<PlanCuenta | null>(null);
   const [indiceActivo, setIndiceActivo] = useState(0);
@@ -155,6 +157,20 @@ export function LineaContable({ movimiento, onEliminar, onActualizar, deshabilit
           </p>
         )}
       </div>
+
+      <select
+        value={movimiento.tercero_id ?? ""}
+        onChange={(e) => !deshabilitarCampos && onActualizar(movimiento.id, "tercero_id", e.target.value || null)}
+        disabled={deshabilitarCampos}
+        className={`${inputBase} w-44 ${deshabilitarCampos ? 'opacity-70 cursor-not-allowed' : ''}`}
+      >
+        <option value="">Sin tercero</option>
+        {terceros.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.num_doc ? `${t.num_doc} · ${t.nombre}` : t.nombre}
+          </option>
+        ))}
+      </select>
 
       <div className="relative w-32">
         <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-medium text-gray-500 dark:text-gray-400">$</span>

@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Empresa, EmpresaService } from "../services/empresaService";
 import { PlanCuenta, PlanCuentaService } from "../services/planCuentaService";
+import { Tercero, TerceroService } from "../services/terceroService";
 import { AlertService } from "../services/alertService";
 
 export interface Movimiento {
   id: string;
   cuenta_codigo: string;
+  tercero_id: string | null;
   debito: number;
   credito: number;
   descripcion: string;
@@ -17,10 +19,11 @@ export function useComprobante() {
   const [fecha, setFecha] = useState("2026-07-22");
   const [descripcion, setDescripcion] = useState("Registro contable inicial");
   const [movimientos, setMovimientos] = useState<Movimiento[]>([
-    { id: "1", cuenta_codigo: "", debito: 0, credito: 0, descripcion: "" },
-    { id: "2", cuenta_codigo: "", debito: 0, credito: 0, descripcion: "" },
+    { id: "1", cuenta_codigo: "", tercero_id: null, debito: 0, credito: 0, descripcion: "" },
+    { id: "2", cuenta_codigo: "", tercero_id: null, debito: 0, credito: 0, descripcion: "" },
   ]);
   const [cuentas, setCuentas] = useState<PlanCuenta[]>([]);
+  const [terceros, setTerceros] = useState<Tercero[]>([]);
 
   useEffect(() => {
     const cargarEmpresas = async () => {
@@ -33,6 +36,18 @@ export function useComprobante() {
       }
     };
     cargarEmpresas();
+  }, []);
+
+  useEffect(() => {
+    const cargarTerceros = async () => {
+      try {
+        const data = await TerceroService.listar();
+        setTerceros(data);
+      } catch {
+        AlertService.error("No se pudieron cargar los terceros");
+      }
+    };
+    cargarTerceros();
   }, []);
 
   useEffect(() => {
@@ -58,7 +73,7 @@ export function useComprobante() {
   const agregarLinea = useCallback(() => {
     setMovimientos((prev) => [
       ...prev,
-      { id: generarId(), cuenta_codigo: "", debito: 0, credito: 0, descripcion: "" },
+      { id: generarId(), cuenta_codigo: "", tercero_id: null, debito: 0, credito: 0, descripcion: "" },
     ]);
   }, []);
 
@@ -66,7 +81,7 @@ export function useComprobante() {
     setMovimientos((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
-  const actualizarLinea = useCallback((id: string, campo: keyof Movimiento, valor: string | number) => {
+  const actualizarLinea = useCallback((id: string, campo: keyof Movimiento, valor: string | number | null) => {
     setMovimientos((prev) =>
       prev.map((mov) => {
         if (mov.id !== id) return mov;
@@ -96,7 +111,7 @@ export function useComprobante() {
     empresas, empresaId, setEmpresaId,
     fecha, setFecha,
     descripcion, setDescripcion,
-    movimientos, setMovimientos, agregarLinea, eliminarLinea, actualizarLinea, cuentas,
+    movimientos, setMovimientos, agregarLinea, eliminarLinea, actualizarLinea, cuentas, terceros,
     totalDebito, totalCredito, diferencia, esValido
   };
 }
