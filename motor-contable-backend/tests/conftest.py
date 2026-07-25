@@ -95,14 +95,23 @@ def client(db):
     vía get_db): la mayoría de los tests existentes verifican reglas de
     negocio, no el login en sí, así que no tiene sentido obligarlos a hacer
     un login real. El flujo de auth de verdad se prueba aparte, en
-    test_auth_api.py, con un cliente que NO usa este override."""
+    test_auth_api.py, con un cliente que NO usa este override.
+
+    El usuario "de mentiras" se persiste igual (aunque sea dentro de la
+    transacción que se revierte al final): comprobantes.creado_por_id tiene
+    una FK real a usuarios.id, así que un UUID inventado sin fila detrás
+    rompería esa constraint en cuanto el test contabilizara algo."""
     from fastapi.testclient import TestClient
+
+    usuario_prueba = Usuario(username=f"suite.pruebas.{uuid.uuid4().hex[:8]}", nombre="Suite de pruebas", activo=True, password_hash="no-aplica")
+    db.add(usuario_prueba)
+    db.flush()
 
     def _override_get_db():
         yield db
 
     def _override_usuario_actual():
-        return Usuario(id=uuid.uuid4(), username="suite.pruebas", nombre="Suite de pruebas", activo=True)
+        return usuario_prueba
 
     app.dependency_overrides[get_db] = _override_get_db
     app.dependency_overrides[obtener_usuario_actual] = _override_usuario_actual

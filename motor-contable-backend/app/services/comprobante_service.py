@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from pydantic import ValidationError
@@ -67,7 +68,7 @@ def _agregar_movimientos(db: Session, comprobante_id, movimientos):
         ))
 
 
-def contabilizar_comprobante(db: Session, comprobante_in: ComprobanteCreate):
+def contabilizar_comprobante(db: Session, comprobante_in: ComprobanteCreate, usuario_id=None):
     anio = comprobante_in.fecha.year
     mes = comprobante_in.fecha.month
 
@@ -80,7 +81,10 @@ def contabilizar_comprobante(db: Session, comprobante_in: ComprobanteCreate):
         consecutivo=_siguiente_consecutivo(db, periodo),
         fecha=comprobante_in.fecha,
         descripcion=comprobante_in.descripcion,
-        estado="CONTABILIZADO"
+        estado="CONTABILIZADO",
+        creado_por_id=usuario_id,
+        contabilizado_por_id=usuario_id,
+        contabilizado_en=datetime.now(timezone.utc)
     )
     db.add(nuevo_comprobante)
     db.flush()
@@ -90,7 +94,7 @@ def contabilizar_comprobante(db: Session, comprobante_in: ComprobanteCreate):
     return nuevo_comprobante
 
 
-def crear_borrador(db: Session, comprobante_in: ComprobanteBorradorCreate):
+def crear_borrador(db: Session, comprobante_in: ComprobanteBorradorCreate, usuario_id=None):
     """Guarda un comprobante en estado BORRADOR. A diferencia de
     contabilizar_comprobante, no exige partida doble, mínimo de líneas,
     cuentas activas ni período abierto: un borrador no afecta el libro
@@ -108,7 +112,8 @@ def crear_borrador(db: Session, comprobante_in: ComprobanteBorradorCreate):
         consecutivo=None,
         fecha=comprobante_in.fecha,
         descripcion=comprobante_in.descripcion,
-        estado="BORRADOR"
+        estado="BORRADOR",
+        creado_por_id=usuario_id
     )
     db.add(nuevo_comprobante)
     db.flush()
@@ -151,7 +156,7 @@ def actualizar_borrador(db: Session, comprobante_id, comprobante_in: Comprobante
     return comprobante
 
 
-def contabilizar_borrador(db: Session, comprobante_id):
+def contabilizar_borrador(db: Session, comprobante_id, usuario_id=None):
     """Promueve un BORRADOR a CONTABILIZADO: aquí sí se exigen todas las
     reglas de la sección 3.3 (mínimo dos líneas, partida doble, cuentas
     activas, período abierto) y se asigna el consecutivo definitivo."""
@@ -192,12 +197,14 @@ def contabilizar_borrador(db: Session, comprobante_id):
     comprobante.periodo_id = periodo.id
     comprobante.consecutivo = _siguiente_consecutivo(db, periodo)
     comprobante.estado = "CONTABILIZADO"
+    comprobante.contabilizado_por_id = usuario_id
+    comprobante.contabilizado_en = datetime.now(timezone.utc)
     db.flush()
 
     return comprobante
 
 
-def revertir_comprobante(db: Session, comprobante_id):
+def revertir_comprobante(db: Session, comprobante_id, usuario_id=None):
     comprobante = db.query(Comprobante).filter(Comprobante.id == comprobante_id).first()
     if not comprobante:
         raise HTTPException(status_code=404, detail="Comprobante no encontrado.")
@@ -224,7 +231,10 @@ def revertir_comprobante(db: Session, comprobante_id):
         consecutivo=_siguiente_consecutivo(db, periodo),
         fecha=comprobante.fecha,
         descripcion=f"Reversión del comprobante {comprobante.consecutivo}",
-        estado="CONTABILIZADO"
+        estado="CONTABILIZADO",
+        creado_por_id=usuario_id,
+        contabilizado_por_id=usuario_id,
+        contabilizado_en=datetime.now(timezone.utc)
     )
     db.add(nuevo_comprobante)
     db.flush()
@@ -248,5 +258,7 @@ def revertir_comprobante(db: Session, comprobante_id):
         raise HTTPException(status_code=400, detail="El comprobante de reversión está desbalanceado.")
 
     comprobante.revertido = True
+    comprobante.revertido_por_id = usuario_id
+    comprobante.revertido_en = datetime.now(timezone.utc)
 
     return nuevo_comprobante
