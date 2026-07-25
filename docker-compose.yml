@@ -5,8 +5,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: motor_contable
-    ports:
-      - "5432:5432"
+    # Sin "ports": solo el contenedor "backend" necesita hablarle a la base,
+    # y lo hace por la red interna de Docker (hostname "db"). No hace
+    # falta (ni conviene) exponer Postgres directo a internet.
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -20,12 +21,16 @@ services:
       context: ./motor-contable-backend
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/motor_contable
-      # Cambia esta clave si vas a exponer el proyecto más allá de tu
-      # máquina; ver README para el resto de variables de entorno.
-      JWT_SECRET_KEY: cambia-esta-clave-en-produccion
+      # Cambia esto en cualquier servidor real: es la clave que firma los
+      # JWT. Si no la sobreescribes, cualquiera que lea este repo público
+      # conoce la clave por defecto y podría forjar tokens válidos.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-cambia-esta-clave-en-produccion}
       JWT_EXPIRE_MINUTES: "480"
+      # Orígenes desde los que el navegador puede llamar a la API. En local
+      # es localhost:3000; en un servidor, la URL pública real del frontend.
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -35,10 +40,12 @@ services:
       context: ./frontend-contable
     environment:
       # El navegador (no el contenedor) es quien llama a esta URL, por eso
-      # apunta a localhost:8000 y no al hostname interno "backend".
-      NEXT_PUBLIC_API_URL: http://localhost:8000/api
+      # tiene que ser una dirección alcanzable desde tu máquina/navegador
+      # (localhost en desarrollo; la IP o dominio real del servidor en
+      # producción) y NUNCA el hostname interno de Docker ("backend").
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api}
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
       - backend
 

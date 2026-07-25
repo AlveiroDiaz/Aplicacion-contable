@@ -17,6 +17,15 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 480
 
+    # Orígenes permitidos por CORS, separados por coma. Por defecto solo
+    # localhost (desarrollo); en un servidor real hay que sobreescribirlo
+    # con la URL pública real del frontend (ver docker-compose.yml / README).
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [origen.strip() for origen in self.CORS_ORIGINS.split(",") if origen.strip()]
+
     class Config:
         case_sensitive = True
 
