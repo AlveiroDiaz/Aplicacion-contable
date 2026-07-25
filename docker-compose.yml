@@ -38,12 +38,13 @@ services:
   frontend:
     build:
       context: ./frontend-contable
-    environment:
-      # El navegador (no el contenedor) es quien llama a esta URL, por eso
-      # tiene que ser una dirección alcanzable desde tu máquina/navegador
-      # (localhost en desarrollo; la IP o dominio real del servidor en
-      # producción) y NUNCA el hostname interno de Docker ("backend").
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api}
+      args:
+        # NEXT_PUBLIC_* se compila DENTRO del bundle de producción (next
+        # build), así que tiene que llegar como build-arg, no solo como
+        # variable de entorno del contenedor. Si cambias esta URL, hace
+        # falta reconstruir la imagen (docker compose up -d --build
+        # frontend), no solo recrear el contenedor.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:

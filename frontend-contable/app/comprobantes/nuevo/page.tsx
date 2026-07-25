@@ -5,9 +5,9 @@ import { LineaContable } from "../../../components/LineaContable";
 import { ComprobanteService, ComprobanteResponse } from "../../../services/comprobanteService";
 import { AlertService } from "../../../services/alertService";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
-export default function NuevoComprobantePage() {
+function NuevoComprobanteForm() {
   const contabilidad = useComprobante();
   const searchParams = useSearchParams();
   const viewId = searchParams.get("view");
@@ -272,5 +272,13 @@ export default function NuevoComprobantePage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function NuevoComprobantePage() {
+  return (
+    <Suspense>
+      <NuevoComprobanteForm />
+    </Suspense>
   );
 }
