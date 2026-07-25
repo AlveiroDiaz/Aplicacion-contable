@@ -62,6 +62,18 @@ const items = [
       </svg>
     ),
   },
+  {
+    href: "/reportes/exogena",
+    label: "Exógena",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0">
+        <path d="M4 7h16" />
+        <path d="M4 12h16" />
+        <path d="M4 17h10" />
+        <path d="M18 5l3 3-3 3" />
+      </svg>
+    ),
+  },
 ];
 
 export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {

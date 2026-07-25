@@ -26,7 +26,7 @@ class MovimientoContable(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     comprobante_id = Column(UUID(as_uuid=True), ForeignKey("comprobantes.id"), nullable=False)
     cuenta_codigo = Column(String, ForeignKey("plan_cuentas.codigo"), nullable=False)
-    tercero_id = Column(UUID(as_uuid=True), nullable=True) # Opcional por ahora
+    tercero_id = Column(UUID(as_uuid=True), ForeignKey("terceros.id"), nullable=True)
     
     # Uso ESTRICTO de Numeric para precisión monetaria (Escenario 5)
     debito = Column(Numeric(20, 2), default=0.00)
@@ -34,3 +34,4 @@ class MovimientoContable(Base):
     descripcion = Column(String, nullable=True)
 
     comprobante = relationship("Comprobante", back_populates="movimientos")
+    tercero = relationship("Tercero", back_populates="movimientos")

@@ -8,5 +8,6 @@ class Empresa(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     nit = Column(String, unique=True, index=True, nullable=False)
+    dv = Column(String, nullable=True)
     razon_social = Column(String, nullable=False)
     activa = Column(Boolean, default=True)

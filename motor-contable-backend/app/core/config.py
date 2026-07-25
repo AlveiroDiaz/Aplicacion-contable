@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     
     # URL de conexión a PostgreSQL
     DATABASE_URL: str = "postgresql://postgres:1205@localhost:5432/motor_contable"
+    UVT_SOURCE_URL: str = ""
+    UVT_REFRESH_INTERVAL_DAYS: int = 30
 
     class Config:
         case_sensitive = True

@@ -7,11 +7,15 @@ from app.models.empresa import Empresa
 from app.models.cuenta import PlanCuentas
 from app.models.periodo import PeriodoContable
 from app.models.comprobante import Comprobante, MovimientoContable
+from app.models.tercero import Tercero
+from app.models.uvt import UVTValue
+from app.models.exogena import ExogenaGeneracion
 from app.api.comprobantes import router as comprobantes_router 
 from app.api.empresas import router as empresas_router
 from app.api.reportes import router as reportes_router
 from app.api.cuentas import router as cuentas_router
 from app.api.periodos import router as periodos_router
+from app.api.exogena import router as exogena_router
 # Importar el índice de modelos para que SQLAlchemy los reconozca
 from app.models import base 
 
@@ -39,6 +43,7 @@ app.include_router(empresas_router, prefix="/api/empresas", tags=["Empresas"])
 app.include_router(reportes_router, prefix="/api/reportes", tags=["Reportes"])
 app.include_router(cuentas_router, prefix="/api/cuentas", tags=["Plan de Cuentas"])
 app.include_router(periodos_router, prefix="/api/periodos", tags=["Periodos Contables"])
+app.include_router(exogena_router, prefix="/api/exogena", tags=["Exógena"])
 
 @app.get("/", tags=["Health"])
 def health_check():

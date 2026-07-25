@@ -21,4 +21,5 @@ def obtener_empresas(db: Session = Depends(get_db)):
         return empresas
     except Exception as e:
         # Mantenemos tu buena práctica de capturar excepciones y evitar que el servidor colapse
+        print(f"Error al consultar las empresas: {e}")
         raise HTTPException(status_code=500, detail="Error interno al consultar las empresas.")
