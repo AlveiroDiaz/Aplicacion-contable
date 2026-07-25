@@ -2,9 +2,13 @@
 
 Módulo contable que permite administrar un plan de cuentas, registrar comprobantes (con partida doble), consultar el libro mayor, y generar el archivo de información exógena. Incluye login con JWT y se levanta completo con Docker Compose.
 
-## Demo en vivo
-
-**http://161.97.86.251:3001** — usuario `admin`, contraseña `admin123`.
+<p align="center">
+  <a href="http://161.97.86.251:3001">
+    <img src="https://img.shields.io/badge/%F0%9F%9A%80_DEMO_EN_VIVO-http%3A%2F%2F161.97.86.251%3A3001-brightgreen?style=for-the-badge" alt="Demo en vivo" />
+  </a>
+  <br/>
+  <sub>usuario <code>admin</code> · contraseña <code>admin123</code></sub>
+</p>
 
 Es una instancia real corriendo con Docker Compose en un VPS (no un mock ni capturas de pantalla), con datos de demostración ya cargados (empresa, plan de cuentas, terceros y un comprobante contabilizado) para poder probar todo — incluida la generación de exógena — sin tener que crear nada a mano primero. Es un servidor de prueba para esta entrega, no un servicio con garantía de disponibilidad continua.
 
