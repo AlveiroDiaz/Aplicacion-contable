@@ -14,6 +14,7 @@ export default function ExogenaPage() {
   const [fechaFin, setFechaFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [historial, setHistorial] = useState<ExogenaHistoryItem[]>([]);
+  const [descargandoId, setDescargandoId] = useState<string | null>(null);
 
   useEffect(() => {
     EmpresaService.obtenerTodas()
@@ -43,6 +44,23 @@ export default function ExogenaPage() {
       AlertService.error(error.message || "Error al generar el XML de exógena.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const redescargar = async (item: ExogenaHistoryItem) => {
+    setDescargandoId(item.id);
+    try {
+      const { blob, filename } = await ExogenaService.redescargar(item.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      AlertService.error(error.message || "Error al re-descargar el archivo de exógena.");
+    } finally {
+      setDescargandoId(null);
     }
   };
 
@@ -173,8 +191,23 @@ export default function ExogenaPage() {
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">Año {item.anio_gravable}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Generado el {new Date(item.fecha_generacion).toLocaleDateString()}</p>
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                      {item.registros} registros · {item.total_retencion.toLocaleString("es-CO")} COP
+                    <div className="flex items-center gap-4">
+                      <div className="text-sm text-gray-600 dark:text-gray-300">
+                        {item.registros} registros · {Number(item.total_retencion).toLocaleString("es-CO")} COP
+                      </div>
+                      <button
+                        onClick={() => redescargar(item)}
+                        disabled={descargandoId === item.id}
+                        title="Re-descargar XML"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        {descargandoId === item.id ? "Descargando..." : "Descargar"}
+                      </button>
                     </div>
                   </div>
                 </div>

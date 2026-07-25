@@ -1,6 +1,6 @@
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from typing import List, Optional
 from uuid import UUID
@@ -9,6 +9,12 @@ from app.core.database import get_db
 from app.models.comprobante import MovimientoContable, Comprobante
 from app.models.cuenta import PlanCuentas # Asumiendo tu modelo de cuentas
 from pydantic import BaseModel
+
+
+def _tercero_display(tercero) -> Optional[str]:
+    if not tercero:
+        return None
+    return tercero.nombre or tercero.num_doc or str(tercero.id)
 
 router = APIRouter(tags=["Reportes Contables"])
 
@@ -56,6 +62,8 @@ def consultar_libro_mayor(
     # 2. Consultar los movimientos asociados a esta cuenta uniendo con la tabla comprobantes
     query = db.query(MovimientoContable, Comprobante).join(
         Comprobante, MovimientoContable.comprobante_id == Comprobante.id
+    ).options(
+        joinedload(MovimientoContable.tercero)
     ).filter(
         Comprobante.empresa_id == empresa_id,
         MovimientoContable.cuenta_codigo == cuenta_codigo
@@ -86,7 +94,7 @@ def consultar_libro_mayor(
                 comprobante_consecutivo=comp.consecutivo,
                 descripcion_comprobante=comp.descripcion,
                 descripcion_movimiento=mov.descripcion,
-                tercero=str(mov.tercero_id) if mov.tercero_id else None,
+                tercero=_tercero_display(mov.tercero),
                 debito=debito,
                 credito=credito,
                 saldo_acumulado=saldo_corriendo

@@ -48,7 +48,7 @@ def test_libro_mayor_no_pierde_precision_al_serializar(client, empresa, periodo_
     assert Decimal(cuerpo["saldo_final"]) == Decimal("-0.30")
 
 
-def test_libro_mayor_incluye_tercero_cuando_aplica(client, empresa, periodo_abierto, plan_cuentas, db):
+def test_libro_mayor_muestra_el_nombre_del_tercero_no_el_uuid(client, empresa, periodo_abierto, plan_cuentas, db):
     from app.models.tercero import Tercero
 
     tercero = Tercero(num_doc="123456789", nombre="Proveedor de prueba")
@@ -67,4 +67,25 @@ def test_libro_mayor_incluye_tercero_cuando_aplica(client, empresa, periodo_abie
 
     assert respuesta.status_code == 200
     movimiento = respuesta.json()["movimientos"][0]
-    assert movimiento["tercero"] == str(tercero.id)
+    assert movimiento["tercero"] == "Proveedor de prueba"
+
+
+def test_libro_mayor_usa_num_doc_si_el_tercero_no_tiene_nombre(client, empresa, periodo_abierto, plan_cuentas, db):
+    from app.models.tercero import Tercero
+
+    tercero = Tercero(num_doc="987654321", nombre=None)
+    db.add(tercero)
+    db.flush()
+
+    _contabilizar(client, empresa, "2025-01-15", [
+        {"cuenta_codigo": "5135", "debito": "100000", "credito": "0", "tercero_id": str(tercero.id)},
+        {"cuenta_codigo": "2205", "debito": "0", "credito": "100000"},
+    ])
+
+    respuesta = client.get(
+        "/api/reportes/libro-mayor",
+        params={"empresa_id": str(empresa.id), "cuenta_codigo": "5135"},
+    )
+
+    movimiento = respuesta.json()["movimientos"][0]
+    assert movimiento["tercero"] == "987654321"
